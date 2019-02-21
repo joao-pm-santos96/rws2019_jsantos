@@ -1,0 +1,20 @@
+{
+    "configurations": [
+        {
+            "browse": {
+                "databaseFilename": "",
+                "limitSymbolsToIncludedHeaders": true
+            },
+            "includePath": [
+                "/home/joao/catkin_ws/devel/include",
+                "/opt/ros/melodic/include",
+                "/home/joao/catkin_ws/src/beginner_tutorials/include",
+                "/home/joao/catkin_ws/src/rws2019/rws2019_jsantos/player_jsantos/include",
+                "/usr/include"
+            ],
+            "name": "Linux",
+            "intelliSenseMode": "gcc-x64"
+        }
+    ],
+    "version": 4
+}

@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<!-- -->
+<launch>
+    <arg name="delay" default="5"/>
+
+    <node name="jsantos" pkg="player_jsantos" type="player_jsantos_node" respawn="true" output="screen" />
+    <rosparam command="load" file="$(find player_jsantos)/param/param.yaml" />
+
+</launch>

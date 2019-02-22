@@ -1,4 +1,6 @@
 #include <ros/ros.h>
+#include <rws2019_msgs/MakeAPlay.h>
+#include <tf/transform_broadcaster.h>
 #include <iostream>
 #include <vector>
 
@@ -97,6 +99,9 @@ public:
   boost::shared_ptr<Team> team_mine;
   boost::shared_ptr<Team> team_preys;
 
+  tf::TransformBroadcaster br;
+  tf::Transform transform;
+
   MyPlayer(string player_name_in, string team_name_in) : Player(player_name_in)
   {
     setTeamName(team_name_in);
@@ -139,6 +144,22 @@ public:
     ROS_INFO_STREAM("My name is " << player_name << " and my team is " << team_mine->team_name);
     ROS_INFO_STREAM("I'm hunting " << team_preys->team_name << " and escaping " << team_hunters->team_name);
   }
+
+  void makeAPlayCallback(rws2019_msgs::MakeAPlayConstPtr msg)
+  {
+    ROS_INFO("received a new msg");
+
+    // publicar transformacao
+
+    tf::Transform transform1;
+
+    transform1.setOrigin(tf::Vector3(-5, 5, 0.0));
+    tf::Quaternion q;
+    q.setRPY(0, 0, 5);
+    transform.setRotation(q);
+
+    br.sendTransform(tf::StampedTransform(transform1, ros::Time::now(), "world", player_name));
+  }
 };
 
 }  // namespace jsantos_ns
@@ -153,9 +174,13 @@ int main(int argc, char **argv)
 
   jsantos_ns::MyPlayer player(player_name, player_team);
 
+  ros::Subscriber sub = n.subscribe("/make_a_play", 100, &jsantos_ns::MyPlayer::makeAPlayCallback, &player);
+
   while (ros::ok())
-  {    
+  {
     ros::Duration(1).sleep();
     player.printInfo();
+
+    ros::spinOnce();
   }
 }

@@ -121,7 +121,7 @@ public:
     ros::NodeHandle n;
 
     vis_pub = (boost::shared_ptr<ros::Publisher>)new ros::Publisher;
-    (*vis_pub) = n.advertise<visualization_msgs::Marker>("player_names", 0);
+    (*vis_pub) = n.advertise<visualization_msgs::Marker>("/bocas", 0);
 
     if (team_red->playerBelongsToTeam(player_name))
     {
@@ -231,9 +231,9 @@ public:
     vector<double> dist_to_preys;
     vector<double> ang_to_preys;
 
-    for (size_t i = 0; i < team_preys->player_names.size(); i++)
+    for (size_t i = 0; i < msg->red_alive.size(); i++)
     {
-      std::tuple<float, float> t = getDistanceAndAngleToPlayer(team_preys->player_names[i]);
+      std::tuple<float, float> t = getDistanceAndAngleToPlayer(msg->red_alive[i]);
       dist_to_preys.push_back(std::get<0>(t));
       ang_to_preys.push_back(std::get<1>(t));
     }
@@ -251,19 +251,22 @@ public:
 
     // Step 2.5
 
-    float dx = 10;
+    float dx = 100;
     float angle;
     float dx_max;
     float angle_max;
 
-    if (dist_to_cntr > 4)
+    if (dist_to_cntr > 4.8)
     {
       angle = ang_to_cntr - M_PI / 2;
     }
     else
     {
       angle = ang_to_preys[index_closest_prey];
-    }
+      //angle=0;
+    }    
+
+    // ROS_INFO_STREAM(angle);
 
     dx_max = msg->cheetah;
     dx > dx_max ? dx = dx_max : dx = dx;
@@ -280,7 +283,7 @@ public:
     T1.setRotation(q);
 
     // Step 4
-    tf::Transform Tglobal = T0 * T1; 
+    tf::Transform Tglobal = T0 * T1;
 
     br.sendTransform(tf::StampedTransform(Tglobal, ros::Time::now(), "world", player_name));
 
@@ -291,16 +294,19 @@ public:
     marker.id = 0;
     marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
     marker.action = visualization_msgs::Marker::ADD;
-
+    marker.pose.position.y = 0.5;
     // marker.scale.x = 1;
     // marker.scale.y = 0.1;
-    marker.scale.z = 0.6;
+    marker.scale.z = 0.4;
     marker.color.a = 1.0;  // Don't forget to set the alpha!
     marker.color.r = 0.0;
     marker.color.g = 0.0;
-    marker.color.b = 1.0;
-    // only if using a MESH_RESOURCE marker type:
-    marker.text = player_name;
+    marker.color.b = 0.0;
+
+    string boca = "Vou-te apanhar " + team_preys->player_names[index_closest_prey];
+
+    marker.text = boca;
+
     vis_pub->publish(marker);
   }
 };

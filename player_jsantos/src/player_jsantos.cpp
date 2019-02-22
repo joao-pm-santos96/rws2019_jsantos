@@ -2,6 +2,7 @@
 #include <rws2019_msgs/MakeAPlay.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
+#include <visualization_msgs/Marker.h>
 #include <iostream>
 #include <vector>
 
@@ -108,6 +109,7 @@ public:
 
   tf::TransformBroadcaster br;
   tf::TransformListener listener;
+  boost::shared_ptr<ros::Publisher> vis_pub;
 
   MyPlayer(string player_name_in, string team_name_in) : Player(player_name_in)
   {
@@ -115,6 +117,11 @@ public:
     team_red = (boost::shared_ptr<Team>)new Team("red");
     team_green = (boost::shared_ptr<Team>)new Team("green");
     team_blue = (boost::shared_ptr<Team>)new Team("blue");
+
+    ros::NodeHandle n;
+
+    vis_pub = (boost::shared_ptr<ros::Publisher>)new ros::Publisher;
+    (*vis_pub) = n.advertise<visualization_msgs::Marker>("player_names", 0);
 
     if (team_red->playerBelongsToTeam(player_name))
     {
@@ -208,6 +215,25 @@ public:
     tf::Transform Tglobal = T0 * T1;
 
     br.sendTransform(tf::StampedTransform(Tglobal, ros::Time::now(), "world", player_name));
+
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = player_name;
+    marker.header.stamp = ros::Time();
+    marker.ns = player_name;
+    marker.id = 0;
+    marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+    marker.action = visualization_msgs::Marker::ADD;
+
+    marker.scale.x = 1;
+    marker.scale.y = 0.1;
+    marker.scale.z = 0.6;
+    marker.color.a = 1.0;  // Don't forget to set the alpha!
+    marker.color.r = 0.0;
+    marker.color.g = 0.0;
+    marker.color.b = 1.0;
+    // only if using a MESH_RESOURCE marker type:
+    marker.mesh_resource = "package://pr2_description/meshes/base_v0/base.dae";
+    vis_pub->publish(marker);
   }
 };
 

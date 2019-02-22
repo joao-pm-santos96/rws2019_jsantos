@@ -281,13 +281,7 @@ public:
 
     string boca;
 
-    if (dist_to_cntr > 4.9)  // prioridade 2 : nao atingir a berma
-    {
-      angle = ang_to_cntr + M_PI / 2;
-
-      boca = "AI A ARENA A ACABAR!!!";
-    }
-    else if (dist_closest_prey >= 2)  // prioridade 1 : fugir
+    if (dist_closest_prey >= 1.5)  // prioridade 1 : fugir
     {
       angle = ang_to_hunter[index_closest_hunter] * -1;
 
@@ -298,6 +292,13 @@ public:
       angle = ang_to_preys[index_closest_prey];
 
       boca = "Vou-te apanhar " + team_preys->player_names[index_closest_prey];
+    }
+
+    if (dist_to_cntr > 4.9)  // prioridade 2 : nao atingir a berma
+    {
+      angle = ang_to_cntr + M_PI / 2;
+
+      boca = "AI A ARENA A ACABAR!!!";
     }
 
     // ROS_INFO_STREAM(angle);
@@ -336,8 +337,6 @@ public:
     marker.color.r = 0.0;
     marker.color.g = 0.0;
     marker.color.b = 0.0;
-
-    
 
     marker.text = boca;
 

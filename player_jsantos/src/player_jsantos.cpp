@@ -14,6 +14,12 @@ float randomizePosition()
   return (((double)rand() / (RAND_MAX)) - 0.5) * 10;
 };
 
+float randomizePosition2()
+{
+  srand(1000 * time(NULL));  // set initial seed value to 5323
+  return (((double)rand() / (RAND_MAX)) - 0.5) * 10;
+};
+
 namespace jsantos_ns
 {
 class Team
@@ -152,7 +158,7 @@ public:
     tf::Transform T1;
 
     float sx = randomizePosition();
-    float sy = randomizePosition();
+    float sy = randomizePosition2();
 
     T1.setOrigin(tf::Vector3(sx, sy, 0.0));
     tf::Quaternion q;

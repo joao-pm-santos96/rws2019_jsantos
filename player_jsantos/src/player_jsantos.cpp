@@ -10,7 +10,7 @@ using namespace std;
 
 float randomizePosition()
 {
-  srand(6832 * time(NULL));  // set initial seed value to 5323
+  srand(7559 * time(NULL));  // set initial seed value to 5323
   return (((double)rand() / (RAND_MAX)) - 0.5) * 10;
 };
 
@@ -180,7 +180,7 @@ public:
     tf::StampedTransform T0;
     try
     {
-      listener.lookupTransform(alvo_name, player_name, ros::Time(0), T0);
+      listener.lookupTransform(player_name, alvo_name, ros::Time(0), T0);
     }
     catch (tf::TransformException ex)
     {
@@ -238,14 +238,37 @@ public:
       ang_to_preys.push_back(std::get<1>(t));
     }
 
+    vector<double> dist_to_hunter;
+    vector<double> ang_to_hunter;
+
+    for (size_t i = 0; i < msg->green_alive.size(); i++)
+    {
+      std::tuple<float, float> t = getDistanceAndAngleToPlayer(msg->green_alive[i]);
+      dist_to_hunter.push_back(std::get<0>(t));
+      ang_to_hunter.push_back(std::get<1>(t));
+    }
+
     int index_closest_prey = 0;
     float dist_closest_prey = 1000;
+
     for (size_t i = 0; i < dist_to_preys.size(); i++)
     {
       if (dist_to_preys[i] < dist_closest_prey)
       {
         index_closest_prey = i;
         dist_closest_prey = dist_to_preys[i];
+      }
+    }
+
+    int index_closest_hunter = 0;
+    float dist_closest_hunter = 1000;
+
+    for (size_t i = 0; i < dist_to_hunter.size(); i++)
+    {
+      if (dist_to_hunter[i] < dist_closest_hunter)
+      {
+        index_closest_hunter = i;
+        dist_closest_hunter = dist_to_hunter[i];
       }
     }
 
@@ -256,15 +279,26 @@ public:
     float dx_max;
     float angle_max;
 
-    if (dist_to_cntr > 4.8)
+    string boca;
+
+    if (dist_to_cntr > 4.9)  // prioridade 2 : nao atingir a berma
     {
-      angle = ang_to_cntr - M_PI / 2;
+      angle = ang_to_cntr + M_PI / 2;
+
+      boca = "AI A ARENA A ACABAR!!!";
     }
-    else
+    else if (dist_closest_prey >= 2)  // prioridade 1 : fugir
+    {
+      angle = ang_to_hunter[index_closest_hunter] * -1;
+
+      boca = "Vou fugir do " + team_hunters->player_names[index_closest_hunter];
+    }
+    else  // prioridade 3 : caçar
     {
       angle = ang_to_preys[index_closest_prey];
-      //angle=0;
-    }    
+
+      boca = "Vou-te apanhar " + team_preys->player_names[index_closest_prey];
+    }
 
     // ROS_INFO_STREAM(angle);
 
@@ -303,7 +337,7 @@ public:
     marker.color.g = 0.0;
     marker.color.b = 0.0;
 
-    string boca = "Vou-te apanhar " + team_preys->player_names[index_closest_prey];
+    
 
     marker.text = boca;
 

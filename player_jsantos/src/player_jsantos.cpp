@@ -156,6 +156,8 @@ public:
     tf::Transform Tglobal = T1;
 
     br.sendTransform(tf::StampedTransform(Tglobal, ros::Time::now(), "world", player_name));
+    ros::Duration(0.1).sleep();
+    br.sendTransform(tf::StampedTransform(Tglobal, ros::Time::now(), "world", player_name));
 
     printInfo();
   }
@@ -184,7 +186,15 @@ public:
 
     // Step 2
     float dx = 0.5;
-    float angle = M_PI / 6;
+    float angle = M_PI / 16;
+
+    // Step 2.5
+
+    float dx_max = msg->cheetah;
+    dx > dx_max ? dx = dx_max : dx = dx;
+
+    float angle_max = M_PI / 30;
+    fabs(angle) > fabs(angle_max) ? angle = angle_max * angle / fabs(angle) : angle = angle;
 
     // Step 3
     tf::Transform T1;

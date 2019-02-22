@@ -280,7 +280,7 @@ public:
     T1.setRotation(q);
 
     // Step 4
-    tf::Transform Tglobal = T0 * T1;
+    tf::Transform Tglobal = T0 * T1; 
 
     br.sendTransform(tf::StampedTransform(Tglobal, ros::Time::now(), "world", player_name));
 

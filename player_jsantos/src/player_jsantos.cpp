@@ -201,33 +201,17 @@ public:
     return { dist, ang };
   };
 
-  float getDistanceToArenaCenter()
+  std::tuple<float, float> getDistanceAndAngleToWorld()
   {
-    tf::StampedTransform T0;
-    try
-    {
-      listener.lookupTransform("world", player_name, ros::Time(0), T0);
-    }
-    catch (tf::TransformException ex)
-    {
-      ROS_ERROR("%s", ex.what());
-      ros::Duration(0.01).sleep();
-
-      return 1000;
-    }
-
-    float x = T0.getOrigin().x();
-    float y = T0.getOrigin().y();
-    float dist = sqrt(x * x + y * y);
-
-    ROS_INFO("Dist to center %f", dist);
-
-    return dist;
-  };
+    return getDistanceAndAngleToPlayer("world");
+  }
 
   void makeAPlayCallback(rws2019_msgs::MakeAPlayConstPtr msg)
   {
     ROS_INFO("received a new msg");
+
+    float dist_to_cntr = std::get<0>(getDistanceAndAngleToWorld());
+    float ang_to_cntr = std::get<1>(getDistanceAndAngleToWorld());
 
     // Step 0
     tf::StampedTransform T0;
@@ -249,10 +233,9 @@ public:
 
     for (size_t i = 0; i < team_preys->player_names.size(); i++)
     {
-      std::tuple <float, float> t =getDistanceAndAngleToPlayer(team_preys->player_names[i]);
+      std::tuple<float, float> t = getDistanceAndAngleToPlayer(team_preys->player_names[i]);
       dist_to_preys.push_back(std::get<0>(t));
       ang_to_preys.push_back(std::get<1>(t));
-      
     }
 
     int index_closest_prey = 0;
@@ -266,15 +249,26 @@ public:
       }
     }
 
-    float dx = 10;
-    float angle = ang_to_preys[index_closest_prey];
-
     // Step 2.5
 
-    float dx_max = msg->cheetah;
+    float dx = 10;
+    float angle;
+    float dx_max;
+    float angle_max;
+
+    if (dist_to_cntr > 4)
+    {
+      angle = ang_to_cntr - M_PI / 2;
+    }
+    else
+    {
+      angle = ang_to_preys[index_closest_prey];
+    }
+
+    dx_max = msg->cheetah;
     dx > dx_max ? dx = dx_max : dx = dx;
 
-    float angle_max = M_PI / 30;
+    angle_max = M_PI / 30;
     fabs(angle) > fabs(angle_max) ? angle = angle_max * angle / fabs(angle) : angle = angle;
 
     // Step 3

@@ -175,6 +175,56 @@ public:
     ROS_INFO_STREAM("I'm hunting " << team_preys->team_name << " and escaping " << team_hunters->team_name);
   }
 
+  std::tuple<float, float> getDistanceAndAngleToPlayer(string alvo_name)
+  {
+    tf::StampedTransform T0;
+    try
+    {
+      listener.lookupTransform(alvo_name, player_name, ros::Time(0), T0);
+    }
+    catch (tf::TransformException ex)
+    {
+      ROS_ERROR("%s", ex.what());
+      ros::Duration(0.01).sleep();
+
+      return { 1000, 0 };
+    }
+
+    float x = T0.getOrigin().x();
+    float y = T0.getOrigin().y();
+    float dist = sqrt(x * x + y * y);
+
+    float ang = atan2(y, x);
+
+    ROS_INFO_STREAM("Dist to " << alvo_name << " is " << dist);
+
+    return { dist, ang };
+  };
+
+  float getDistanceToArenaCenter()
+  {
+    tf::StampedTransform T0;
+    try
+    {
+      listener.lookupTransform("world", player_name, ros::Time(0), T0);
+    }
+    catch (tf::TransformException ex)
+    {
+      ROS_ERROR("%s", ex.what());
+      ros::Duration(0.01).sleep();
+
+      return 1000;
+    }
+
+    float x = T0.getOrigin().x();
+    float y = T0.getOrigin().y();
+    float dist = sqrt(x * x + y * y);
+
+    ROS_INFO("Dist to center %f", dist);
+
+    return dist;
+  };
+
   void makeAPlayCallback(rws2019_msgs::MakeAPlayConstPtr msg)
   {
     ROS_INFO("received a new msg");
@@ -192,8 +242,32 @@ public:
     }
 
     // Step 2
-    float dx = 0.5;
-    float angle = M_PI / 16;
+
+    // for each pray fin closest and follow it
+    vector<double> dist_to_preys;
+    vector<double> ang_to_preys;
+
+    for (size_t i = 0; i < team_preys->player_names.size(); i++)
+    {
+      std::tuple <float, float> t =getDistanceAndAngleToPlayer(team_preys->player_names[i]);
+      dist_to_preys.push_back(std::get<0>(t));
+      ang_to_preys.push_back(std::get<1>(t));
+      
+    }
+
+    int index_closest_prey = 0;
+    float dist_closest_prey = 1000;
+    for (size_t i = 0; i < dist_to_preys.size(); i++)
+    {
+      if (dist_to_preys[i] < dist_closest_prey)
+      {
+        index_closest_prey = i;
+        dist_closest_prey = dist_to_preys[i];
+      }
+    }
+
+    float dx = 10;
+    float angle = ang_to_preys[index_closest_prey];
 
     // Step 2.5
 
@@ -224,8 +298,8 @@ public:
     marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
     marker.action = visualization_msgs::Marker::ADD;
 
-    //marker.scale.x = 1;
-    //marker.scale.y = 0.1;
+    // marker.scale.x = 1;
+    // marker.scale.y = 0.1;
     marker.scale.z = 0.6;
     marker.color.a = 1.0;  // Don't forget to set the alpha!
     marker.color.r = 0.0;

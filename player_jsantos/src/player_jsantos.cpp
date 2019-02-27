@@ -262,7 +262,7 @@ public:
       ang_to_hunter.push_back(std::get<1>(t));
     }
 
-    int index_closest_prey = -1;
+    int index_closest_prey = 0;
     float dist_closest_prey = 1000;
 
     for (size_t i = 0; i < dist_to_preys.size(); i++)
@@ -274,7 +274,7 @@ public:
       }
     }
 
-    int index_closest_hunter = -1;
+    int index_closest_hunter = 0;
     float dist_closest_hunter = 1000;
 
     for (size_t i = 0; i < dist_to_hunter.size(); i++)
@@ -315,9 +315,9 @@ public:
 
     string boca;
 
-    if (dist_closest_hunter <= 1.5)  // prioridade 1 : fugir
+    if (dist_closest_hunter <= 1)  // prioridade 1 : fugir
     {
-      angle = ang_to_cntr + (M_PI - ang_to_hunter[index_closest_hunter]);
+      angle = ang_to_hunter[index_closest_hunter] + M_PI ;
 
       boca = "Vou fugir do " + team_hunters->player_names[index_closest_hunter];
     }

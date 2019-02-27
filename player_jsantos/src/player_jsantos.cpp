@@ -117,6 +117,9 @@ public:
   tf::TransformListener listener;
   boost::shared_ptr<ros::Publisher> vis_pub;
 
+  string last_prey;
+  string last_hunter;
+
   MyPlayer(string player_name_in, string team_name_in) : Player(player_name_in)
   {
     setTeamName(team_name_in);
@@ -173,6 +176,9 @@ public:
     br.sendTransform(tf::StampedTransform(Tglobal, ros::Time::now(), "world", player_name));
 
     printInfo();
+
+    last_prey = "";
+    last_hunter = "";
   }
 
   void printInfo(void)
@@ -216,6 +222,8 @@ public:
   {
     ROS_INFO("received a new msg");
 
+    bool someting_change = false;
+
     float dist_to_cntr = std::get<0>(getDistanceAndAngleToWorld());
     float ang_to_cntr = std::get<1>(getDistanceAndAngleToWorld());
 
@@ -254,7 +262,7 @@ public:
       ang_to_hunter.push_back(std::get<1>(t));
     }
 
-    int index_closest_prey = 0;
+    int index_closest_prey = -1;
     float dist_closest_prey = 1000;
 
     for (size_t i = 0; i < dist_to_preys.size(); i++)
@@ -266,7 +274,7 @@ public:
       }
     }
 
-    int index_closest_hunter = 0;
+    int index_closest_hunter = -1;
     float dist_closest_hunter = 1000;
 
     for (size_t i = 0; i < dist_to_hunter.size(); i++)
@@ -275,6 +283,25 @@ public:
       {
         index_closest_hunter = i;
         dist_closest_hunter = dist_to_hunter[i];
+      }
+    }
+
+    if (index_closest_prey != -1)
+    {
+      string prey = msg->red_alive[index_closest_prey];
+      if (prey != last_prey)
+      {
+        !someting_change;
+        last_prey = prey;
+      }
+    }
+    else if (index_closest_hunter != -1)
+    {
+      string hunter = msg->red_alive[index_closest_hunter];
+      if (hunter != last_hunter)
+      {
+        !someting_change;
+        last_hunter = hunter;
       }
     }
 
@@ -289,18 +316,18 @@ public:
 
     if (dist_closest_hunter <= 1.5)  // prioridade 1 : fugir
     {
-      angle = ang_to_hunter[index_closest_hunter] * -1;
+      angle = ang_to_cntr + (M_PI - ang_to_hunter[index_closest_hunter]);
 
       boca = "Vou fugir do " + team_hunters->player_names[index_closest_hunter];
     }
-    else  // prioridade 3 : caçar
+    else  // prioridade 2 : caçar
     {
       angle = ang_to_preys[index_closest_prey];
 
       boca = "Vou-te apanhar " + team_preys->player_names[index_closest_prey];
     }
 
-    if (dist_to_cntr > 5)  // prioridade 2 : nao atingir a berma
+    if (dist_to_cntr > 7.2)  // prioridade : nao atingir a berma
     {
       angle = ang_to_cntr + M_PI / 2;
 
@@ -313,8 +340,10 @@ public:
     dx > dx_max ? dx = dx_max : dx = dx;
 
     angle_max = M_PI / 30;
-    fabs(angle) > fabs(angle_max) ? angle = angle_max * angle / fabs(angle) : angle = angle;
-
+    if (angle != 0)
+    {
+      fabs(angle) > fabs(angle_max) ? angle = angle_max * angle / fabs(angle) : angle = angle;
+    }
     // Step 3
     tf::Transform T1;
 
@@ -328,25 +357,29 @@ public:
 
     br.sendTransform(tf::StampedTransform(Tglobal, ros::Time::now(), "world", player_name));
 
-    visualization_msgs::Marker marker;
-    marker.header.frame_id = player_name;
-    marker.header.stamp = ros::Time();
-    marker.ns = player_name;
-    marker.id = 0;
-    marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-    marker.action = visualization_msgs::Marker::ADD;
-    marker.pose.position.y = 0.5;
-    // marker.scale.x = 1;
-    // marker.scale.y = 0.1;
-    marker.scale.z = 0.4;
-    marker.color.a = 1.0;  // Don't forget to set the alpha!
-    marker.color.r = 0.0;
-    marker.color.g = 0.0;
-    marker.color.b = 0.0;
+    if (someting_change)
+    {
+      visualization_msgs::Marker marker;
+      marker.header.frame_id = player_name;
+      marker.header.stamp = ros::Time();
+      marker.ns = player_name;
+      marker.id = 0;
+      marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+      marker.action = visualization_msgs::Marker::ADD;
+      marker.pose.position.y = 0.5;
+      // marker.scale.x = 1;
+      // marker.scale.y = 0.1;
+      marker.scale.z = 0.4;
+      marker.color.a = 1.0;  // Don't forget to set the alpha!
+      marker.color.r = 0.0;
+      marker.color.g = 0.0;
+      marker.color.b = 0.0;
+      marker.lifetime = ros::Duration(2);
 
-    marker.text = boca;
+      marker.text = boca;
 
-    vis_pub->publish(marker);
+      vis_pub->publish(marker);
+    }
   }
 };
 

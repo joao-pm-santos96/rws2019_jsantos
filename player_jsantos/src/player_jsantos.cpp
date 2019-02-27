@@ -287,7 +287,7 @@ public:
 
     string boca;
 
-    if (dist_closest_prey >= 1.5)  // prioridade 1 : fugir
+    if (dist_closest_hunter <= 1.5)  // prioridade 1 : fugir
     {
       angle = ang_to_hunter[index_closest_hunter] * -1;
 
@@ -300,7 +300,7 @@ public:
       boca = "Vou-te apanhar " + team_preys->player_names[index_closest_prey];
     }
 
-    if (dist_to_cntr > 4.9)  // prioridade 2 : nao atingir a berma
+    if (dist_to_cntr > 5)  // prioridade 2 : nao atingir a berma
     {
       angle = ang_to_cntr + M_PI / 2;
 
@@ -358,7 +358,7 @@ int main(int argc, char **argv)
   ros::NodeHandle n;
 
   string player_name = "jsantos";
-  string player_team = "red";
+  string player_team = "blue";
 
   jsantos_ns::MyPlayer player(player_name, player_team);
 

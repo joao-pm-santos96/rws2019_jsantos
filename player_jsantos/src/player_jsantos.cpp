@@ -315,7 +315,7 @@ public:
 
     string boca;
 
-    if (dist_closest_hunter <= 1)  // prioridade 1 : fugir
+    if (dist_closest_hunter <= 1.2)  // prioridade 1 : fugir
     {
       angle = ang_to_hunter[index_closest_hunter] + M_PI ;
 

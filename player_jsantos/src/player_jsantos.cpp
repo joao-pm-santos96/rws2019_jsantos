@@ -1,8 +1,11 @@
+#include <pcl/point_types.h>
+#include <pcl_ros/point_cloud.h>
 #include <ros/ros.h>
 #include <rws2019_msgs/MakeAPlay.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
 #include <visualization_msgs/Marker.h>
+#include <boost/foreach.hpp>
 #include <iostream>
 #include <vector>
 
@@ -19,6 +22,8 @@ float randomizePosition2()
   srand(1000 * time(NULL));  // set initial seed value to 5323
   return (((double)rand() / (RAND_MAX)) - 0.5) * 10;
 };
+
+typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 
 namespace jsantos_ns
 {
@@ -317,7 +322,7 @@ public:
 
     if (dist_closest_hunter <= 1.2)  // prioridade 1 : fugir
     {
-      angle = ang_to_hunter[index_closest_hunter] + M_PI ;
+      angle = ang_to_hunter[index_closest_hunter] + M_PI;
 
       boca = "Vou fugir do " + team_hunters->player_names[index_closest_hunter];
     }
@@ -382,13 +387,20 @@ public:
 
       vis_pub->publish(marker);
     }
-    #endif
+#endif
+  }
+
+  void PCL_callback(const PointCloud::ConstPtr& msg)
+  {
+    printf("Cloud: width = %d, height = %d\n", msg->width, msg->height);
+    BOOST_FOREACH (const pcl::PointXYZ& pt, msg->points)
+      printf("\t(%f, %f, %f)\n", pt.x, pt.y, pt.z);
   }
 };
 
 }  // namespace jsantos_ns
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
   ros::init(argc, argv, "jsantos");
   ros::NodeHandle n;
@@ -399,6 +411,8 @@ int main(int argc, char **argv)
   jsantos_ns::MyPlayer player(player_name, player_team);
 
   ros::Subscriber sub = n.subscribe("/make_a_play", 100, &jsantos_ns::MyPlayer::makeAPlayCallback, &player);
+
+  ros::Subscriber pcl_sub = n.subscribe<PointCloud>("/object_point_cloud", 1, jsantos_ns::MyPlayer::PCL_callback, &player);
 
   ros::Rate r(20);
 

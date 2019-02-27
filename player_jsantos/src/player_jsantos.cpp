@@ -375,6 +375,7 @@ public:
       marker.color.g = 0.0;
       marker.color.b = 0.0;
       marker.lifetime = ros::Duration(2);
+      marker.frame_locked = 1;
 
       marker.text = boca;
 

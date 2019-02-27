@@ -285,7 +285,7 @@ public:
         dist_closest_hunter = dist_to_hunter[i];
       }
     }
-
+#if 0
     if (index_closest_prey != -1)
     {
       string prey = msg->red_alive[index_closest_prey];
@@ -304,6 +304,7 @@ public:
         last_hunter = hunter;
       }
     }
+#endif
 
     // Step 2.5
 
@@ -356,7 +357,7 @@ public:
     tf::Transform Tglobal = T0 * T1;
 
     br.sendTransform(tf::StampedTransform(Tglobal, ros::Time::now(), "world", player_name));
-
+#if 0
     if (someting_change)
     {
       visualization_msgs::Marker marker;
@@ -381,6 +382,7 @@ public:
 
       vis_pub->publish(marker);
     }
+    #endif
   }
 };
 

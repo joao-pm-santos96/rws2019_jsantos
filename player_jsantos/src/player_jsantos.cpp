@@ -412,7 +412,7 @@ int main(int argc, char** argv)
 
   ros::Subscriber sub = n.subscribe("/make_a_play", 100, &jsantos_ns::MyPlayer::makeAPlayCallback, &player);
 
-  ros::Subscriber pcl_sub = n.subscribe<PointCloud>("/object_point_cloud", 1, jsantos_ns::MyPlayer::PCL_callback, &player);
+  ros::Subscriber pcl_sub = n.subscribe<PointCloud>("/object_point_cloud", 1, &jsantos_ns::MyPlayer::PCL_callback, &player);
 
   ros::Rate r(20);
 

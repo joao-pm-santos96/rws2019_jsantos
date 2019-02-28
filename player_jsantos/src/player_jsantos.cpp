@@ -8,6 +8,7 @@
 #include <boost/foreach.hpp>
 #include <iostream>
 #include <vector>
+#include "rws2019_msgs/DoTheMath.h"
 
 using namespace std;
 
@@ -23,7 +24,7 @@ float randomizePosition2()
   return (((double)rand() / (RAND_MAX)) - 0.5) * 10;
 };
 
-//typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
+// typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 
 namespace jsantos_ns
 {
@@ -188,8 +189,8 @@ public:
 
   void printInfo(void)
   {
-    //ROS_INFO_STREAM("My name is " << player_name << " and my team is " << team_mine->team_name);
-    //ROS_INFO_STREAM("I'm hunting " << team_preys->team_name << " and escaping " << team_hunters->team_name);
+    // ROS_INFO_STREAM("My name is " << player_name << " and my team is " << team_mine->team_name);
+    // ROS_INFO_STREAM("I'm hunting " << team_preys->team_name << " and escaping " << team_hunters->team_name);
   }
 
   std::tuple<float, float> getDistanceAndAngleToPlayer(string alvo_name)
@@ -201,7 +202,7 @@ public:
     }
     catch (tf::TransformException ex)
     {
-      //ROS_ERROR("%s", ex.what());
+      // ROS_ERROR("%s", ex.what());
       ros::Duration(0.01).sleep();
 
       return { 1000, 0 };
@@ -213,7 +214,7 @@ public:
 
     float ang = atan2(y, x);
 
-    //ROS_INFO_STREAM("Dist to " << alvo_name << " is " << dist);
+    // ROS_INFO_STREAM("Dist to " << alvo_name << " is " << dist);
 
     return { dist, ang };
   };
@@ -229,11 +230,11 @@ public:
     tf::StampedTransform T0;
     try
     {
-      listener.lookupTransform(alvo_name, "world", ros::Time(0), T0);
+      listener.lookupTransform("world", alvo_name, ros::Time(0), T0);
     }
     catch (tf::TransformException ex)
     {
-      //ROS_ERROR("%s", ex.what());
+      // ROS_ERROR("%s", ex.what());
       ros::Duration(0.01).sleep();
 
       return { 1000, 0 };
@@ -245,14 +246,50 @@ public:
 
     float ang = atan2(y, x);
 
-    //ROS_INFO_STREAM("Dist to " << alvo_name << " is " << dist);
+    // ROS_INFO_STREAM("Dist to " << alvo_name << " is " << dist);
 
     return { dist, ang };
   };
 
+  bool Math(rws2019_msgs::DoTheMath::Request &req, rws2019_msgs::DoTheMath::Response &res)
+  {
+
+    if (req.op == "+") {
+      res.result = req.a + req.b;
+    }
+    else if (req.op == "-")
+    {
+      res.result = req.a - req.b;
+    }
+    else if (req.op == "*")
+    {
+      res.result = req.a * req.b;
+    }
+    else if (req.op == "/")
+    {
+      res.result = req.a / req.b;
+    }
+    else
+    {
+      return false;
+    }
+    
+    
+    
+    
+    
+
+
+
+    ROS_INFO("request: x=%ld, y=%ld", (long int)req.a, (long int)req.b);
+    ROS_INFO("sending back response: [%ld]", (long int)res.result);
+
+    return true;
+  }
+
   void makeAPlayCallback(rws2019_msgs::MakeAPlayConstPtr msg)
   {
-    //ROS_INFO("received a new msg");
+    // ROS_INFO("received a new msg");
 
     bool someting_change = false;
 
@@ -267,7 +304,7 @@ public:
     }
     catch (tf::TransformException ex)
     {
-      //ROS_ERROR("%s", ex.what());
+      // ROS_ERROR("%s", ex.what());
       ros::Duration(0.1).sleep();
     }
 
@@ -350,11 +387,11 @@ public:
 
     if (dist_closest_hunter <= 1.2)  // prioridade 1 : fugir
     {
-      //angle = ang_to_hunter[index_closest_hunter];
+      // angle = ang_to_hunter[index_closest_hunter];
 
-      t=getDistanceAndAngleOfAlvoToWorld(team_hunters->player_names[index_closest_hunter]);
+      t = getDistanceAndAngleOfAlvoToWorld(team_hunters->player_names[index_closest_hunter]);
 
-      angle=std::get<1>(t);
+      angle = std::get<1>(t);
 
       boca = "Vou fugir do " + team_hunters->player_names[index_closest_hunter];
     }
@@ -421,18 +458,18 @@ public:
     }
 #endif
   }
-/*
-  void PCL_callback(const PointCloud::ConstPtr& msg)
-  {
-    printf("Cloud: width = %d, height = %d\n", msg->width, msg->height);
-    BOOST_FOREACH (const pcl::PointXYZ& pt, msg->points)
-      printf("\t(%f, %f, %f)\n", pt.x, pt.y, pt.z);
-  }*/
+  /*
+    void PCL_callback(const PointCloud::ConstPtr& msg)
+    {
+      printf("Cloud: width = %d, height = %d\n", msg->width, msg->height);
+      BOOST_FOREACH (const pcl::PointXYZ& pt, msg->points)
+        printf("\t(%f, %f, %f)\n", pt.x, pt.y, pt.z);
+    }*/
 };
 
 }  // namespace jsantos_ns
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
   ros::init(argc, argv, "jsantos");
   ros::NodeHandle n;
@@ -444,7 +481,10 @@ int main(int argc, char** argv)
 
   ros::Subscriber sub = n.subscribe("/make_a_play", 100, &jsantos_ns::MyPlayer::makeAPlayCallback, &player);
 
-  //ros::Subscriber pcl_sub = n.subscribe<PointCloud>("/object_point_cloud", 1, &jsantos_ns::MyPlayer::PCL_callback, &player);
+  // ros::Subscriber pcl_sub = n.subscribe<PointCloud>("/object_point_cloud", 1, &jsantos_ns::MyPlayer::PCL_callback,
+  // &player);
+
+  ros::ServiceServer service = n.advertiseService("do_the_math", &jsantos_ns::MyPlayer::Math, &player);
 
   ros::Rate r(20);
 

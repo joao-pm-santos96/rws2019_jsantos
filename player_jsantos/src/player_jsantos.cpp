@@ -1,5 +1,5 @@
-#include <pcl/point_types.h>
-#include <pcl_ros/point_cloud.h>
+//#include <pcl/point_types.h>
+//#include <pcl_ros/point_cloud.h>
 #include <ros/ros.h>
 #include <rws2019_msgs/MakeAPlay.h>
 #include <tf/transform_broadcaster.h>
@@ -23,7 +23,7 @@ float randomizePosition2()
   return (((double)rand() / (RAND_MAX)) - 0.5) * 10;
 };
 
-typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
+//typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 
 namespace jsantos_ns
 {
@@ -188,8 +188,8 @@ public:
 
   void printInfo(void)
   {
-    ROS_INFO_STREAM("My name is " << player_name << " and my team is " << team_mine->team_name);
-    ROS_INFO_STREAM("I'm hunting " << team_preys->team_name << " and escaping " << team_hunters->team_name);
+    //ROS_INFO_STREAM("My name is " << player_name << " and my team is " << team_mine->team_name);
+    //ROS_INFO_STREAM("I'm hunting " << team_preys->team_name << " and escaping " << team_hunters->team_name);
   }
 
   std::tuple<float, float> getDistanceAndAngleToPlayer(string alvo_name)
@@ -201,7 +201,7 @@ public:
     }
     catch (tf::TransformException ex)
     {
-      ROS_ERROR("%s", ex.what());
+      //ROS_ERROR("%s", ex.what());
       ros::Duration(0.01).sleep();
 
       return { 1000, 0 };
@@ -213,7 +213,7 @@ public:
 
     float ang = atan2(y, x);
 
-    ROS_INFO_STREAM("Dist to " << alvo_name << " is " << dist);
+    //ROS_INFO_STREAM("Dist to " << alvo_name << " is " << dist);
 
     return { dist, ang };
   };
@@ -223,9 +223,36 @@ public:
     return getDistanceAndAngleToPlayer("world");
   }
 
+  // TESTE
+  std::tuple<float, float> getDistanceAndAngleOfAlvoToWorld(string alvo_name)
+  {
+    tf::StampedTransform T0;
+    try
+    {
+      listener.lookupTransform(alvo_name, "world", ros::Time(0), T0);
+    }
+    catch (tf::TransformException ex)
+    {
+      //ROS_ERROR("%s", ex.what());
+      ros::Duration(0.01).sleep();
+
+      return { 1000, 0 };
+    }
+
+    float x = T0.getOrigin().x();
+    float y = T0.getOrigin().y();
+    float dist = sqrt(x * x + y * y);
+
+    float ang = atan2(y, x);
+
+    //ROS_INFO_STREAM("Dist to " << alvo_name << " is " << dist);
+
+    return { dist, ang };
+  };
+
   void makeAPlayCallback(rws2019_msgs::MakeAPlayConstPtr msg)
   {
-    ROS_INFO("received a new msg");
+    //ROS_INFO("received a new msg");
 
     bool someting_change = false;
 
@@ -240,7 +267,7 @@ public:
     }
     catch (tf::TransformException ex)
     {
-      ROS_ERROR("%s", ex.what());
+      //ROS_ERROR("%s", ex.what());
       ros::Duration(0.1).sleep();
     }
 
@@ -250,9 +277,10 @@ public:
     vector<double> dist_to_preys;
     vector<double> ang_to_preys;
 
+    std::tuple<float, float> t;
     for (size_t i = 0; i < msg->red_alive.size(); i++)
     {
-      std::tuple<float, float> t = getDistanceAndAngleToPlayer(msg->red_alive[i]);
+      t = getDistanceAndAngleToPlayer(msg->red_alive[i]);
       dist_to_preys.push_back(std::get<0>(t));
       ang_to_preys.push_back(std::get<1>(t));
     }
@@ -262,7 +290,7 @@ public:
 
     for (size_t i = 0; i < msg->green_alive.size(); i++)
     {
-      std::tuple<float, float> t = getDistanceAndAngleToPlayer(msg->green_alive[i]);
+      t = getDistanceAndAngleToPlayer(msg->green_alive[i]);
       dist_to_hunter.push_back(std::get<0>(t));
       ang_to_hunter.push_back(std::get<1>(t));
     }
@@ -322,7 +350,11 @@ public:
 
     if (dist_closest_hunter <= 1.2)  // prioridade 1 : fugir
     {
-      angle = ang_to_hunter[index_closest_hunter] + M_PI;
+      //angle = ang_to_hunter[index_closest_hunter];
+
+      t=getDistanceAndAngleOfAlvoToWorld(team_hunters->player_names[index_closest_hunter]);
+
+      angle=std::get<1>(t);
 
       boca = "Vou fugir do " + team_hunters->player_names[index_closest_hunter];
     }
@@ -389,13 +421,13 @@ public:
     }
 #endif
   }
-
+/*
   void PCL_callback(const PointCloud::ConstPtr& msg)
   {
     printf("Cloud: width = %d, height = %d\n", msg->width, msg->height);
     BOOST_FOREACH (const pcl::PointXYZ& pt, msg->points)
       printf("\t(%f, %f, %f)\n", pt.x, pt.y, pt.z);
-  }
+  }*/
 };
 
 }  // namespace jsantos_ns
@@ -412,7 +444,7 @@ int main(int argc, char** argv)
 
   ros::Subscriber sub = n.subscribe("/make_a_play", 100, &jsantos_ns::MyPlayer::makeAPlayCallback, &player);
 
-  ros::Subscriber pcl_sub = n.subscribe<PointCloud>("/object_point_cloud", 1, &jsantos_ns::MyPlayer::PCL_callback, &player);
+  //ros::Subscriber pcl_sub = n.subscribe<PointCloud>("/object_point_cloud", 1, &jsantos_ns::MyPlayer::PCL_callback, &player);
 
   ros::Rate r(20);
 

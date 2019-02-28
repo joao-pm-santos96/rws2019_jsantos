@@ -10,6 +10,8 @@
 #include <vector>
 #include "rws2019_msgs/DoTheMath.h"
 
+#include "sound_play/SoundRequest.h"
+
 using namespace std;
 
 float randomizePosition()
@@ -126,6 +128,10 @@ public:
   string last_prey;
   string last_hunter;
 
+  boost::shared_ptr<ros::Publisher> sound_play_pub;
+
+  boost::shared_ptr<ros::Timer> timer;
+
   MyPlayer(string player_name_in, string team_name_in) : Player(player_name_in)
   {
     setTeamName(team_name_in);
@@ -137,6 +143,13 @@ public:
 
     vis_pub = (boost::shared_ptr<ros::Publisher>)new ros::Publisher;
     (*vis_pub) = n.advertise<visualization_msgs::Marker>("/bocas", 0);
+
+    sound_play_pub = (boost::shared_ptr<ros::Publisher>)new ros::Publisher;
+
+    (*sound_play_pub) = n.advertise<sound_play::SoundRequest>("/robotsound", 10);
+
+    timer = (boost::shared_ptr<ros::Timer>)new ros::Timer;
+    (*timer) = n.createTimer(ros::Duration(5), &MyPlayer::timerCallback, this);
 
     if (team_red->playerBelongsToTeam(player_name))
     {
@@ -253,8 +266,8 @@ public:
 
   bool Math(rws2019_msgs::DoTheMath::Request &req, rws2019_msgs::DoTheMath::Response &res)
   {
-
-    if (req.op == "+") {
+    if (req.op == "+")
+    {
       res.result = req.a + req.b;
     }
     else if (req.op == "-")
@@ -273,13 +286,6 @@ public:
     {
       return false;
     }
-    
-    
-    
-    
-    
-
-
 
     ROS_INFO("request: x=%ld, y=%ld", (long int)req.a, (long int)req.b);
     ROS_INFO("sending back response: [%ld]", (long int)res.result);
@@ -465,6 +471,20 @@ public:
       BOOST_FOREACH (const pcl::PointXYZ& pt, msg->points)
         printf("\t(%f, %f, %f)\n", pt.x, pt.y, pt.z);
     }*/
+
+  void timerCallback(const ros::TimerEvent &event)
+  {
+    sound_play::SoundRequest sound_request;
+
+    sound_request.sound = -3;
+    sound_request.command = 1;
+    sound_request.volume = 1.0;
+
+    sound_request.arg = "jsantos, ola";
+    sound_request.arg2 = "voice_kal_diphone";
+
+    //sound_play_pub->publish(sound_request);
+  }
 };
 
 }  // namespace jsantos_ns
